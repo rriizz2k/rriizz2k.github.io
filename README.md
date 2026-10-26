@@ -84,7 +84,7 @@ PYTHONPATH=. python scripts/check-python-api.py
 
 ## Данные и атрибуция
 
-Hofmann, H. (1994). *Statlog (German Credit Data).* UCI Machine Learning Repository. DOI: https://doi.org/10.24432/C5NC77. Данные: https://www.openml.org/d/31. Лицензия датасета: CC BY 4.0. Денежные значения относятся к историческому датасету и не являются современными рублями.
+Hofmann, H. (1994). *Statlog (German Credit Data).* UCI Machine Learning Repository. DOI: https://doi.org/10.24432/C5NC77. Данные: https://www.openml.org/d/31. Лицензия датасета: CC BY 4.0. Сумма кредита отображается в исторической шкале DM (немецкие марки); это не современные рубли или евро, пересчёт не производится. Справочник единиц: https://posit-academy.quarto.pub/data-gallery/academy-datasets/credit-risk/. В интерфейсе используется один заполненный пример, остальные 17 полей можно раскрыть. Скор демо = выход модели × 100; это не калиброванная вероятность невозврата.
 
 ## Автор и контакты
 

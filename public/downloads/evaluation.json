@@ -16,7 +16,9 @@
     "original_source": "https://archive.ics.uci.edu/dataset/144/statlog+german+credit+data",
     "attribution": "Hofmann, H. (1994). Statlog (German Credit Data). UCI. DOI:10.24432/C5NC77",
     "license": "CC BY 4.0",
-    "sha256": "38b6dbf6fb4b0311a3ffc005730f42623128591fb36473ab3c22d270c0467632"
+    "sha256": "38b6dbf6fb4b0311a3ffc005730f42623128591fb36473ab3c22d270c0467632",
+    "amount_unit": "DM: денежная шкала исторического German Credit; не современные рубли или евро",
+    "amount_unit_reference": "https://posit-academy.quarto.pub/data-gallery/academy-datasets/credit-risk/"
   },
   "protocol": {
     "seed": 42,
