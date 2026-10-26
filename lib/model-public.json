@@ -1,0 +1,142 @@
+{
+  "model_version": "credit-g-original-42-v1",
+  "kind": "logistic",
+  "feature_mode": "original",
+  "threshold": 0.5,
+  "defaults": {
+    "duration": 18.0,
+    "credit_amount": 2317.0,
+    "installment_commitment": 3.0,
+    "residence_since": 3.0,
+    "age": 33.0,
+    "existing_credits": 1.0,
+    "num_dependents": 1.0,
+    "checking_status": "no checking",
+    "credit_history": "existing paid",
+    "purpose": "radio/tv",
+    "savings_status": "<100",
+    "employment": "1<=X<4",
+    "personal_status": "male single",
+    "other_parties": "none",
+    "property_magnitude": "car",
+    "other_payment_plans": "none",
+    "housing": "own",
+    "job": "skilled",
+    "own_telephone": "none",
+    "foreign_worker": "yes"
+  },
+  "schema": {
+    "numeric": {
+      "duration": {
+        "min": 4.0,
+        "max": 72.0
+      },
+      "credit_amount": {
+        "min": 250.0,
+        "max": 18424.0
+      },
+      "installment_commitment": {
+        "min": 1.0,
+        "max": 4.0
+      },
+      "residence_since": {
+        "min": 1.0,
+        "max": 4.0
+      },
+      "age": {
+        "min": 19.0,
+        "max": 75.0
+      },
+      "existing_credits": {
+        "min": 1.0,
+        "max": 4.0
+      },
+      "num_dependents": {
+        "min": 1.0,
+        "max": 2.0
+      }
+    },
+    "categorical": {
+      "checking_status": [
+        "0<=X<200",
+        "<0",
+        ">=200",
+        "no checking"
+      ],
+      "credit_history": [
+        "all paid",
+        "critical/other existing credit",
+        "delayed previously",
+        "existing paid",
+        "no credits/all paid"
+      ],
+      "purpose": [
+        "business",
+        "domestic appliance",
+        "education",
+        "furniture/equipment",
+        "new car",
+        "other",
+        "radio/tv",
+        "repairs",
+        "retraining",
+        "used car"
+      ],
+      "savings_status": [
+        "100<=X<500",
+        "500<=X<1000",
+        "<100",
+        ">=1000",
+        "no known savings"
+      ],
+      "employment": [
+        "1<=X<4",
+        "4<=X<7",
+        "<1",
+        ">=7",
+        "unemployed"
+      ],
+      "personal_status": [
+        "female div/dep/mar",
+        "male div/sep",
+        "male mar/wid",
+        "male single"
+      ],
+      "other_parties": [
+        "co applicant",
+        "guarantor",
+        "none"
+      ],
+      "property_magnitude": [
+        "car",
+        "life insurance",
+        "no known property",
+        "real estate"
+      ],
+      "other_payment_plans": [
+        "bank",
+        "none",
+        "stores"
+      ],
+      "housing": [
+        "for free",
+        "own",
+        "rent"
+      ],
+      "job": [
+        "high qualif/self emp/mgmt",
+        "skilled",
+        "unemp/unskilled non res",
+        "unskilled resident"
+      ],
+      "own_telephone": [
+        "none",
+        "yes"
+      ],
+      "foreign_worker": [
+        "no",
+        "yes"
+      ]
+    }
+  }
+}

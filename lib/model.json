@@ -1,0 +1,341 @@
+{
+  "format_version": 1,
+  "model_version": "credit-g-original-42-v1",
+  "kind": "logistic",
+  "feature_mode": "original",
+  "threshold": 0.5,
+  "numeric_columns": [
+    "duration",
+    "credit_amount",
+    "installment_commitment",
+    "residence_since",
+    "age",
+    "existing_credits",
+    "num_dependents",
+    "credit_amount_log",
+    "credit_amount_per_month"
+  ],
+  "categorical_columns": [
+    "checking_status",
+    "credit_history",
+    "purpose",
+    "savings_status",
+    "employment",
+    "personal_status",
+    "other_parties",
+    "property_magnitude",
+    "other_payment_plans",
+    "housing",
+    "job",
+    "own_telephone",
+    "foreign_worker"
+  ],
+  "numeric_means": [
+    20.77,
+    3189.59125,
+    2.94125,
+    2.83,
+    35.32375,
+    1.4075,
+    1.16,
+    7.771771518618141,
+    162.54139041018328
+  ],
+  "numeric_scales": [
+    11.809936494325445,
+    2671.875880196054,
+    1.1237430478094181,
+    1.1106754701531856,
+    11.038407309820562,
+    0.5669600955975649,
+    0.36660605559646725,
+    0.7698755905150909,
+    116.37486077767663
+  ],
+  "one_hot_categories": [
+    [
+      "0<=X<200",
+      "<0",
+      ">=200",
+      "no checking"
+    ],
+    [
+      "all paid",
+      "critical/other existing credit",
+      "delayed previously",
+      "existing paid",
+      "no credits/all paid"
+    ],
+    [
+      "business",
+      "domestic appliance",
+      "education",
+      "furniture/equipment",
+      "new car",
+      "other",
+      "radio/tv",
+      "repairs",
+      "retraining",
+      "used car"
+    ],
+    [
+      "100<=X<500",
+      "500<=X<1000",
+      "<100",
+      ">=1000",
+      "no known savings"
+    ],
+    [
+      "1<=X<4",
+      "4<=X<7",
+      "<1",
+      ">=7",
+      "unemployed"
+    ],
+    [
+      "female div/dep/mar",
+      "male div/sep",
+      "male mar/wid",
+      "male single"
+    ],
+    [
+      "co applicant",
+      "guarantor",
+      "none"
+    ],
+    [
+      "car",
+      "life insurance",
+      "no known property",
+      "real estate"
+    ],
+    [
+      "bank",
+      "none",
+      "stores"
+    ],
+    [
+      "for free",
+      "own",
+      "rent"
+    ],
+    [
+      "high qualif/self emp/mgmt",
+      "skilled",
+      "unemp/unskilled non res",
+      "unskilled resident"
+    ],
+    [
+      "none",
+      "yes"
+    ],
+    [
+      "no",
+      "yes"
+    ]
+  ],
+  "coefficients": [
+    0.434154879720119,
+    0.46643582757310165,
+    0.35526416588627524,
+    -0.027763451209674817,
+    -0.06146513130098551,
+    0.10892640359218826,
+    0.09607311029998802,
+    -0.27602224252586594,
+    0.11678990053455844,
+    0.2259309420258755,
+    0.6242757810134244,
+    0.05738472200443327,
+    -0.9891240963400233,
+    0.26346409388334935,
+    -0.8541615248132078,
+    -0.04396044946796517,
+    -0.051309229022503795,
+    0.6044344581240377,
+    -0.09806012425463846,
+    -0.06886899890618198,
+    0.9445428503840299,
+    0.131138932620312,
+    0.4870167776374103,
+    -0.6306926489798891,
+    -0.22711095704460482,
+    0.5853003254818704,
+    -0.35991783066467753,
+    -0.8448809775699185,
+    0.24724162044521877,
+    0.1301156404592196,
+    0.5727686430155156,
+    -0.6821921350762978,
+    -0.34946642013994794,
+    -0.06918277166673946,
+    -0.6068532699149243,
+    0.2974263688130488,
+    -0.06310548003800472,
+    0.3601825015103305,
+    0.052889624312295075,
+    0.405864548606218,
+    -0.020788811665410273,
+    -0.5194980125493932,
+    0.38043356529635286,
+    -0.4501717215569014,
+    -0.011794495035743367,
+    -0.11106254778446296,
+    -0.19412814719552354,
+    0.618324344138184,
+    -0.39466630045448753,
+    0.4280131654002239,
+    -0.4520992735561063,
+    -0.057446543140409534,
+    -0.5004073924603002,
+    -0.04436177829461269,
+    0.4632365194586223,
+    0.01579912221663311,
+    0.12056676275790994,
+    -0.33473642061590636,
+    0.11683788434507361,
+    0.12252549655227644,
+    -0.2040581478485674,
+    -0.65758207102035,
+    0.5760494197240579
+  ],
+  "intercept": -0.17240532693838947,
+  "defaults": {
+    "duration": 18.0,
+    "credit_amount": 2317.0,
+    "installment_commitment": 3.0,
+    "residence_since": 3.0,
+    "age": 33.0,
+    "existing_credits": 1.0,
+    "num_dependents": 1.0,
+    "checking_status": "no checking",
+    "credit_history": "existing paid",
+    "purpose": "radio/tv",
+    "savings_status": "<100",
+    "employment": "1<=X<4",
+    "personal_status": "male single",
+    "other_parties": "none",
+    "property_magnitude": "car",
+    "other_payment_plans": "none",
+    "housing": "own",
+    "job": "skilled",
+    "own_telephone": "none",
+    "foreign_worker": "yes"
+  },
+  "schema": {
+    "numeric": {
+      "duration": {
+        "min": 4.0,
+        "max": 72.0
+      },
+      "credit_amount": {
+        "min": 250.0,
+        "max": 18424.0
+      },
+      "installment_commitment": {
+        "min": 1.0,
+        "max": 4.0
+      },
+      "residence_since": {
+        "min": 1.0,
+        "max": 4.0
+      },
+      "age": {
+        "min": 19.0,
+        "max": 75.0
+      },
+      "existing_credits": {
+        "min": 1.0,
+        "max": 4.0
+      },
+      "num_dependents": {
+        "min": 1.0,
+        "max": 2.0
+      }
+    },
+    "categorical": {
+      "checking_status": [
+        "0<=X<200",
+        "<0",
+        ">=200",
+        "no checking"
+      ],
+      "credit_history": [
+        "all paid",
+        "critical/other existing credit",
+        "delayed previously",
+        "existing paid",
+        "no credits/all paid"
+      ],
+      "purpose": [
+        "business",
+        "domestic appliance",
+        "education",
+        "furniture/equipment",
+        "new car",
+        "other",
+        "radio/tv",
+        "repairs",
+        "retraining",
+        "used car"
+      ],
+      "savings_status": [
+        "100<=X<500",
+        "500<=X<1000",
+        "<100",
+        ">=1000",
+        "no known savings"
+      ],
+      "employment": [
+        "1<=X<4",
+        "4<=X<7",
+        "<1",
+        ">=7",
+        "unemployed"
+      ],
+      "personal_status": [
+        "female div/dep/mar",
+        "male div/sep",
+        "male mar/wid",
+        "male single"
+      ],
+      "other_parties": [
+        "co applicant",
+        "guarantor",
+        "none"
+      ],
+      "property_magnitude": [
+        "car",
+        "life insurance",
+        "no known property",
+        "real estate"
+      ],
+      "other_payment_plans": [
+        "bank",
+        "none",
+        "stores"
+      ],
+      "housing": [
+        "for free",
+        "own",
+        "rent"
+      ],
+      "job": [
+        "high qualif/self emp/mgmt",
+        "skilled",
+        "unemp/unskilled non res",
+        "unskilled resident"
+      ],
+      "own_telephone": [
+        "none",
+        "yes"
+      ],
+      "foreign_worker": [
+        "no",
+        "yes"
+      ]
+    }
+  },
+  "training_data_sha256": "38b6dbf6fb4b0311a3ffc005730f42623128591fb36473ab3c22d270c0467632",
+  "sklearn_version": "1.9.1"
+}
