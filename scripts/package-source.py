@@ -6,7 +6,7 @@ root=Path(__file__).resolve().parents[1]
 target=root/'public/downloads/credit-risk-source.zip'
 folders=['app','lib','web','python_api']
 files=['README.md','package.json','package-lock.json','vite.pages.config.ts','render.yaml',
-       'scripts/export-baseline.py','scripts/check-inference.mjs','scripts/check-python-api.py',
+       'scripts/export-baseline.py','scripts/check-inference.mjs','scripts/check-prediction-client.mjs','scripts/check-python-api.py',
        'scripts/parity-cases.json','public/favicon.svg','public/downloads/evaluation.json']
 for folder in folders:
     for path in (root/folder).rglob('*'):

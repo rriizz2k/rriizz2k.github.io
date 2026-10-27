@@ -5,6 +5,7 @@ import { ArrowDown, ArrowRight, ArrowUpRight, Check, ChevronDown, Code2, Copy, D
 import rawReport from '../lib/report.json';
 import rawModel from '../lib/model-public.json';
 import rawExamples from '../lib/examples.json';
+import {predictApplication, type PredictionPhase} from '../lib/prediction-client';
 
 type Application = Record<string, string | number>;
 type ModelPublic = {model_version: string; threshold: number; defaults: Application; schema: {numeric: Record<string, {min: number; max: number}>; categorical: Record<string, string[]>}};
@@ -71,43 +72,44 @@ function Field({name, value, change, compact = false}: {name: string; value: str
   </div>;
 }
 
-function Demo() {
+function Demo({active}: {active: boolean}) {
   const [application, setApplication] = useState<Application>(initial);
   const [result, setResult] = useState<Score | null>(null);
   const [submitted, setSubmitted] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [previous, setPrevious] = useState<number | null>(null);
+  const [source, setSource] = useState<'server' | 'browser' | null>(null);
+  const [phase, setPhase] = useState<PredictionPhase>('server');
   const abort = useRef<AbortController | null>(null);
   const resultRef = useRef<Score | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState('');
   const stale = result !== null && submitted !== JSON.stringify(application);
   const runModel = async (values: Application) => {
     abort.current?.abort();
     const controller = new AbortController(); abort.current = controller;
     setLoading(true); setError('');
-    const timeout = setTimeout(() => controller.abort('timeout'), 60000);
     try {
-      const response = await fetch(`${apiBase()}/api/predict`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({application:values}),signal:controller.signal});
-      const unknown: unknown = await response.json();
-      if (!unknown || typeof unknown!=='object') throw new Error('Сервис вернул непонятный ответ. Повторите расчёт.');
-      const data = unknown as Record<string,unknown>;
-      if (!response.ok) throw new Error(typeof data.error==='string' ? data.error : 'Проверьте значения заявки.');
-      if (typeof data.probability!=='number' || !Number.isFinite(data.probability) || data.probability<0 || data.probability>1 || (data.prediction!==0 && data.prediction!==1) || typeof data.threshold!=='number' || typeof data.model_version!=='string' || !Array.isArray(data.imputed_fields)) throw new Error('Не удалось проверить результат сервиса.');
-      const score = data as unknown as Score;
+      const {score, source: calculatedBy} = await predictApplication(values, apiBase(), {
+        signal: controller.signal,
+        onPhase: next => {if(abort.current===controller && !controller.signal.aborted)setPhase(next);},
+      });
+      if (abort.current!==controller || controller.signal.aborted) return;
       setPrevious(resultRef.current?.probability ?? null); resultRef.current=score;
-      setResult(score); setSubmitted(JSON.stringify(values));
+      setResult(score); setSource(calculatedBy); setSubmitted(JSON.stringify(values));
     } catch(e) {
-      if (controller.signal.aborted && controller.signal.reason!=='timeout') return;
-      setError(controller.signal.reason==='timeout' ? 'Сервис пока не ответил. Повторите расчёт.' : e instanceof Error ? e.message : 'Не удалось связаться с сервисом.');
-    } finally {clearTimeout(timeout);if(abort.current===controller)setLoading(false);}
+      if (abort.current!==controller || controller.signal.aborted) return;
+      setError(e instanceof Error ? e.message : 'Не удалось выполнить расчёт. Повторите попытку.');
+    } finally {if(abort.current===controller)setLoading(false);}
   };
-  useEffect(()=>{void runModel(initial);return()=>abort.current?.abort();},[]);
-  const change=(key:string,value:string|number)=>setApplication(old=>({...old,[key]:value}));
+  useEffect(()=>{if(!active)return;if(!resultRef.current)void runModel({...application});return()=>abort.current?.abort();},[active]);
+  const change=(key:string,value:string|number)=>{abort.current?.abort();setLoading(false);setError('');setApplication(old=>({...old,[key]:value}));};
   const submit=(event:FormEvent)=>{event.preventDefault();void runModel({...application});};
   const reset=()=>{setApplication({...initial});void runModel({...initial});};
-  const copyRequest=async()=>{try{await navigator.clipboard.writeText(JSON.stringify({application},null,2));setCopied(true);setTimeout(()=>setCopied(false),2000);}catch{setError('Можно выделить и скопировать JSON в блоке ниже.');}};
-  const probability=result?.probability??0;
+  const copyRequest=async()=>{try{await navigator.clipboard.writeText(JSON.stringify({application},null,2));setCopyError('');setCopied(true);setTimeout(()=>setCopied(false),2000);}catch{setCopyError('Можно выделить и скопировать JSON в блоке ниже.');}};
+  const showResult=result!==null&&!stale&&!loading&&!error;
+  const probability=showResult?result.probability:0;
   const circumference=2*Math.PI*72;
   return <div className="demo-shell">
     <div className="demo-top"><div><h3>Попробуйте изменить заявку</h3><p>Поля заполнены одной обезличенной заявкой из German Credit.</p></div></div>
@@ -116,12 +118,12 @@ function Demo() {
       <details className="advanced-fields"><summary><SlidersHorizontal size={16}/>Остальные {advanced.length} параметров заявки<ChevronDown size={16}/></summary><p className="field-help">Модель использует все 20 параметров. Здесь указаны остальные значения из того же примера; их тоже можно менять.</p><div className="fields-grid">{advanced.map(name=><Field key={name} name={name} value={application[name]} change={change} compact/>)}</div></details>
       <div className="form-actions"><button className="button primary-button" type="submit" disabled={loading}>{loading?<LoaderCircle size={17} className="spinner"/>:<ArrowRight size={17}/>} {loading?'Считаем…':'Рассчитать риск'}</button><button className="reset-button" type="button" disabled={loading} onClick={reset}><RotateCcw size={15}/>Вернуть пример</button></div><p className="field-help">При изменении трёх полей остальные 17 остаются прежними.</p>
     </form>
-    <div className={`prediction-panel ${stale?'is-stale':''}`} aria-busy={loading}><div className="result-heading"><span className="tiny-label">СКОР МОДЕЛИ</span><span className={`result-chip ${stale?'stale-chip':''}`}>{loading?'Расчёт':stale?'Нужен пересчёт':result?'Готово':'Ожидание'}</span></div><div className="risk-gauge"><svg viewBox="0 0 180 180" aria-hidden="true"><circle cx="90" cy="90" r="72" className="gauge-track"/><circle cx="90" cy="90" r="72" className="gauge-value" strokeDasharray={circumference} strokeDashoffset={circumference*(1-probability)}/></svg><div><strong>{result?number(Math.round(probability*100)):'—'}</strong><span>из 100 баллов</span></div></div>
-      <div className="result-explanation" aria-live="polite"><h4>{stale?'Заявка изменена':result?result.prediction?'Повышенный риск по модели':'Пониженный риск по модели':'Результат появится здесь'}</h4><p>{stale?'Нажмите «Рассчитать риск», чтобы получить новую оценку.':result?`Чем выше скор, тем выше оценённый моделью риск. Граница классов этой версии — ${number(result.threshold*100)} баллов.`:'Заявка отправляется в обученную модель.'}</p></div>
-      {previous!==null&&result&&!stale&&<div className="previous-score"><span>К предыдущему расчёту</span><strong>{result.probability-previous>=0?'+':'−'}{new Intl.NumberFormat('ru-RU',{maximumFractionDigits:1}).format(Math.abs(result.probability-previous)*100)} балла</strong></div>}
-      {error&&<p className="error-message" role="alert">{error}</p>}<div className="result-bottom"><Code2 size={14}/><span>Учебная модель · Logistic Regression</span></div></div></div>
+    <div className={`prediction-panel ${stale?'is-stale':''}`} aria-busy={loading}><div className="result-heading"><span className="tiny-label">СКОР МОДЕЛИ</span><span className={`result-chip ${stale||error?'stale-chip':''}`}>{loading?(phase==='retry'?'Повтор запроса':'Расчёт'):error?'Ошибка':stale?'Нужен пересчёт':result?'Готово':'Ожидание'}</span></div><div className="risk-gauge"><svg viewBox="0 0 180 180" aria-hidden="true"><circle cx="90" cy="90" r="72" className="gauge-track"/><circle cx="90" cy="90" r="72" className="gauge-value" strokeDasharray={circumference} strokeDashoffset={circumference*(1-probability)}/></svg><div><strong>{showResult?number(Math.round(probability*100)):'—'}</strong><span>из 100 баллов</span></div></div>
+      <div className="result-explanation" aria-live="polite"><h4>{loading?(phase==='retry'?'Восстанавливаем связь':phase==='browser'?'Считаем в браузере':'Считаем оценку'):error?'Расчёт не выполнен':stale?'Заявка изменена':result?result.prediction?'Повышенный риск по модели':'Пониженный риск по модели':'Результат появится здесь'}</h4><p>{loading?'Если сервер не ответит, та же модель выполнит расчёт в браузере.':error?'Проверьте заявку и нажмите «Рассчитать риск».':stale?'Нажмите «Рассчитать риск», чтобы получить новую оценку.':result?`Чем выше скор, тем выше оценённый моделью риск. Граница классов этой версии — ${number(result.threshold*100)} баллов.`:'Нажмите «Рассчитать риск».'}</p></div>
+      {previous!==null&&showResult&&result&&<div className="previous-score"><span>К предыдущему расчёту</span><strong>{result.probability-previous>=0?'+':'−'}{new Intl.NumberFormat('ru-RU',{maximumFractionDigits:1}).format(Math.abs(result.probability-previous)*100)} балла</strong></div>}
+      {error&&<p className="error-message" role="alert">{error}</p>}{showResult&&source==='browser'&&<p className="fallback-note" role="status">Сервер недоступен. Та же модель выполнила расчёт в браузере.</p>}<div className="result-bottom"><Code2 size={14}/><span>{showResult?(source==='browser'?'Расчёт в браузере':'Расчёт на сервере'):'Учебная модель'} · Logistic Regression</span></div></div></div>
     <div className="model-confidence-note"><strong>Как понимать результат?</strong> Это учебный скор, а не подтверждённая вероятность невозврата. Модель может ошибаться и не принимает решений о выдаче кредита. <a href="#about-project">Данные, проверка и ограничения →</a></div>
-    <details className="request-details"><summary><Terminal size={16}/>Для разработчиков: запрос к API<ChevronDown size={16}/></summary><div className="request-heading"><code>POST /api/predict</code><button type="button" className="text-button" onClick={copyRequest}>{copied?<Check size={15}/>:<Copy size={15}/>} {copied?'Скопировано':'Скопировать JSON'}</button></div><pre>{JSON.stringify({application},null,2)}</pre><p>Ответ содержит оценку, класс, порог и версию модели. <a href={`${apiBase()}/api/model`} target="_blank" rel="noreferrer">Технический отчёт <ArrowUpRight size={13}/></a></p></details>
+    <details className="request-details"><summary><Terminal size={16}/>Для разработчиков: запрос к API<ChevronDown size={16}/></summary><div className="request-heading"><code>POST /api/predict</code><button type="button" className="text-button" onClick={copyRequest}>{copied?<Check size={15}/>:<Copy size={15}/>} {copied?'Скопировано':'Скопировать JSON'}</button></div><pre>{JSON.stringify({application},null,2)}</pre>{copyError&&<p role="status">{copyError}</p>}<p>Ответ содержит оценку, класс, порог и версию модели. <a href={`${apiBase()}/api/model`} target="_blank" rel="noreferrer">Технический отчёт <ArrowUpRight size={13}/></a></p></details>
   </div>;
 }
 
@@ -169,8 +171,8 @@ export default function Home() {
 
       <section id="project" className="view project-view" hidden={section!=='project'}>
         <div className="page-intro"><span className="eyebrow">ИНТЕРАКТИВНЫЙ ПРОЕКТ</span><h1>Credit Risk Scoring.</h1><p>Измените заявку. Посмотрите, как меняется оценка модели.</p></div>
-        <Demo/>
-        <p className="demo-caption">Оценка вычисляется обученной моделью на сервере. Данные заявки не сохраняются.</p>
+        <Demo active={section==='project'}/>
+        <p className="demo-caption">Оценку считает обученная модель. При недоступности сервера расчёт выполняется в браузере с теми же весами. Данные заявки не сохраняются.</p>
         <a className="plain-link" href="#about-project" onClick={e=>navigate(e,'about-project')}>Как устроена модель и какие у неё результаты <ArrowRight size={16}/></a>
       </section>
 
@@ -179,7 +181,7 @@ export default function Home() {
         <div className="simple-metrics"><div><strong>{decimal(metric.roc_auc)}</strong><span>ROC-AUC</span><p>Ранжирование заявок</p></div><div><strong>{pct(metric.recall)}</strong><span>Recall</span><p>Найденные заявки класса bad</p></div><div><strong>{pct(metric.precision)}</strong><span>Precision</span><p>Доля bad среди отмеченных</p></div></div>
         <p className="metrics-note">Результаты воспроизведённой исходной модели на {report.protocol.test_rows} проверочных заявках. Порог — {pct(metric.threshold,0)}.</p>
         <div className="about-grid"><article><Database size={23}/><h2>На каких данных</h2><p><strong>German Credit:</strong> {number(report.data.rows)} исторических заявок, {report.data.features} исходных признаков. {report.data.good} заявок класса good и {report.data.bad} — bad.</p><a href={report.data.original_source} target="_blank" rel="noreferrer">Посмотреть датасет <ArrowUpRight size={14}/></a></article><article><TrendingUp size={23}/><h2>Зачем этот продукт</h2><p>Пройти путь от анализа банковских данных до модели, прогноз которой можно получить через интерфейс и API. Исследовать, какие ошибки она допускает.</p></article></div>
-        <div className="simple-process"><h2>Как создан</h2><ol><li><span>01</span><div><strong>Изучение данных</strong><p>Распределения, баланс классов и особенности признаков.</p></div></li><li><span>02</span><div><strong>Подготовка и обучение</strong><p>Масштабирование чисел, кодирование категорий, производные признаки. Сравнение Logistic Regression и LightGBM.</p></div></li><li><span>03</span><div><strong>Сохранение и объяснение</strong><p>Эксперименты в MLflow. Отдельный SHAP-анализ для LightGBM.</p></div></li><li><span>04</span><div><strong>API и интерфейс</strong><p>В исходном проекте — FastAPI и Docker. Веб-демо использует экспорт тех же обученных весов; расчёт выполняется на сервере.</p></div></li></ol></div>
+        <div className="simple-process"><h2>Как создан</h2><ol><li><span>01</span><div><strong>Изучение данных</strong><p>Распределения, баланс классов и особенности признаков.</p></div></li><li><span>02</span><div><strong>Подготовка и обучение</strong><p>Масштабирование чисел, кодирование категорий, производные признаки. Сравнение Logistic Regression и LightGBM.</p></div></li><li><span>03</span><div><strong>Сохранение и объяснение</strong><p>Эксперименты в MLflow. Отдельный SHAP-анализ для LightGBM.</p></div></li><li><span>04</span><div><strong>API и интерфейс</strong><p>В исходном проекте — FastAPI и Docker. Веб-демо использует экспорт тех же обученных весов. Основной расчёт — через API; при сбое связи та же модель работает в браузере.</p></div></li></ol></div>
         <details className="info-details"><summary>Подробные результаты <ChevronDown size={18}/></summary><div className="detail-columns"><div><h3>ROC-кривая</h3><RocChart large/><p>Кривая построена по фактическим прогнозам исходной модели.</p></div><div><h3>Ошибки на проверке</h3><div className="confusion-grid"><div className="matrix-cell correct"><strong>{tn}</strong><span>Верно определены good</span></div><div className="matrix-cell wrong"><strong>{fp}</strong><span>Ложные срабатывания</span></div><div className="matrix-cell wrong"><strong>{fn}</strong><span>Пропущены bad</span></div><div className="matrix-cell correct"><strong>{tp}</strong><span>Найдены bad</span></div></div><p>Average Precision: {decimal(metric.average_precision)} · Brier score: {decimal(metric.brier_score)}.</p></div></div></details>
         <details className="info-details"><summary>Проверка и ограничения <ChevronDown size={18}/></summary><p><strong>Совпадение расчётов проверено:</strong> веб-версия и исходная Python-модель дают одинаковые прогнозы на 200 заявках. Это проверка реализации, а не гарантия качества прогнозов.</p><p>Скор в демо — выход модели, умноженный на 100. Это не отдельная банковская скоринговая шкала и не подтверждённая вероятность дефолта.</p><p>На этой проверочной выборке {tp} из {tp+fp} заявок, отмеченных моделью как рискованные, действительно относятся к классу bad. Остальные {fp} — ложные срабатывания.</p><p>Разбиение: {report.protocol.train_rows} заявок для обучения, {report.protocol.test_rows} для проверки, seed {report.protocol.seed}. {report.protocol.note}</p><ul>{report.limitations.map(text=><li key={text}>{text}</li>)}</ul><p className="attribution">{report.data.attribution}. Лицензия: {report.data.license}.</p></details>
         <div className="source-links"><a href="https://github.com/rriizz2k/credit-risk-scoring" target="_blank" rel="noreferrer"><Github size={17}/>Исходный ML-проект <ArrowUpRight size={14}/></a><a href="/downloads/credit-risk-source.zip" download><Download size={17}/>Код демо</a><a href="/downloads/evaluation.json" download><Download size={17}/>Отчёт с метриками</a></div>
